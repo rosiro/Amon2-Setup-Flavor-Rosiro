@@ -44,6 +44,23 @@ sub db {
 1;
 ...
 
+    $self->write_file('app.psgi', <<'...');
+use File::Spec;
+use File::Basename;
+use lib File::Spec->catdir(dirname(__FILE__), 'extlib', 'lib', 'perl5');
+use lib File::Spec->catdir(dirname(__FILE__), 'lib');
+use <% $module %>::Web;
+use Plack::Builder;
+
+builder {
+    enable 'Plack::Middleware::Static',
+        path => qr{^(?:/static/|/robot\.txt$|/favicon.ico$)},
+        root => File::Spec->catdir(dirname(__FILE__).'/root/');
+    enable 'Plack::Middleware::ReverseProxy';
+    <% $module %>::Web->to_app();
+};
+...
+
 $self->write_file("lib/<<PATH>>/Web/Dispatcher.pm",<<'...');
 package <% $module %>::Web::Dispatcher;
 use strict;
