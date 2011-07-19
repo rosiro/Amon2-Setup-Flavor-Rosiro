@@ -178,10 +178,10 @@ __PACKAGE__->add_trigger(
 
     $self->write_file("config/development.pl", <<'...');
 +{
-    'DBI' => [
-        'dbi:mysql:dbname=development.db',
-        '',
-        '',
+    'Teng' => [
+        dsn => 'dbi:mysql:dbname=<% $module %>.db',
+        username => '',
+        password => '',
         +{
 	    mysql_enable_utf8 => '1',
         }
@@ -194,10 +194,10 @@ __PACKAGE__->add_trigger(
 
     $self->write_file("config/deployment.pl", <<'...');
 +{
-    'DBI' => [
-        'dbi:mysql:dbname=deployment.db',
-        '',
-        '',
+    'Teng' => [
+        dsn => 'dbi:mysql:dbname=<% $module %>.db',
+        username => '',
+        password => '',
         +{
 	    mysql_enable_utf8 => '1',
         }
@@ -208,10 +208,10 @@ __PACKAGE__->add_trigger(
 
     $self->write_file("config/test.pl", <<'...');
 +{
-    'DBI' => [
-        'dbi:mysql:dbname=test.db',
-        '',
-        '',
+    'Teng' => [
+        dsn => 'dbi:mysql:dbname=<% $module %>.db',
+        username => '',
+        password => '',
         +{
 	    mysql_enable_utf8 => '1',
         }
