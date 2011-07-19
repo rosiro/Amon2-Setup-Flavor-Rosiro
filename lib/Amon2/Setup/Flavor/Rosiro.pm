@@ -327,7 +327,7 @@ $self->write_file("root/template/index.tt",<<'...');
 ...
     $self->{jquery_min_basename} = Amon2::Setup::Asset::jQuery->jquery_min_basename();
     $self->write_file('root/static/javascript/' . Amon2::Setup::Asset::jQuery->jquery_min_basename(), Amon2::Setup::Asset::jQuery->jquery_min_content());
-    $self->_cp(Amon2::Setup::Asset::BlueTrip->bluetrip_path, 'root/static/bluetrip');
+    $self->_cp(Amon2::Setup::Asset::BlueTrip->bluetrip_path, 'root/static/css/bluetrip');
     
     $self->write_file("t/00_compile.t", <<'...');
 use strict;
