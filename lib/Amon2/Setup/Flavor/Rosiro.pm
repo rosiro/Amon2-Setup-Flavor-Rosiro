@@ -299,7 +299,7 @@ $self->write_file("root/template/index.tt",<<'...');
     <link href="[% uri_for('/static/css/bluetrip/screen.css') %]" rel="stylesheet" type="text/css" media="screen" />
     <link href="[% uri_for('/static/css/bluetrip/print.css') %]" rel="stylesheet" type="text/css" media="print" />
     <!--[if lt IE 8]><link rel="stylesheet" href="[% uri_for('/static/css/bluetrip/ie.css') %]" type="text/css" media="screen, projection"><![endif]--> 
-    <link href="[% uri_for('/static/css/bluetrip/main.css') %]" rel="stylesheet" type="text/css" media="screen" />
+    <link href="[% uri_for('/static/css/main.css') %]" rel="stylesheet" type="text/css" media="screen" />
     <script src="[% uri_for('/static/javascript/jquery-1.6.2.min.js') %]"></script>
     <!--[if lt IE 9]>
         <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
