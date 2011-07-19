@@ -32,7 +32,7 @@ sub db {
     if (!defined $self->{db}) {
         my $conf = $self->config->{'Teng'} or die "missing configuration for 'Teng'";
         my $dbh = DBI->connect($conf->{dsn}, $conf->{username}, $conf->{password}, $conf->{connect_options}) or "Cannot connect to DB:: " . $DBI::errstr;
-        $self->{db} = Hello::DB->new({ dbh => $dbh });
+        $self->{db} = <% $module %>::DB->new({ dbh => $dbh });
     }
     return $self->{db};
 }
@@ -49,7 +49,6 @@ use warnings;
 use Amon2::Web::Dispatcher::RouterSimple;
 
 connect '/' => 'Root#index';
-connect '/' => 'Root#default';
 
 1;
 ...
@@ -62,12 +61,7 @@ use utf8;
 
 sub index {
     my ($class, $c) = @_;
-}
-
-sub default {
-    my ($class, $c) = @_;
-    $c->res->status(404);
-    $c->res->body("404 Not Found");
+    $c->render('index.tt');
 }
 
 1;
@@ -79,6 +73,9 @@ package <% $module %>::DB;
 use parent 'Teng';
 
 1;
+...
+$self->write_file("lib/<<PATH>>/DB/Schema.pm",<<'...');
+
 ...
     $self->write_file("script/make_schema.pl",<<'...');
 use strict;
@@ -123,6 +120,27 @@ sub dispatch {
     return <% $module %>::Web::Dispatcher->dispatch($_[0]) or die "response is not generated";
 }
 
+# login
+use Digest::SHA1 qw(sha1);
+sub login {
+    my ($self, $c) = @_;
+    my $conf = $self->config->{'Login'} or die "mission configuration for Login";
+    my $password = sha1($c->{password_value});
+    my $user = $self->db->single(
+	$conf->{tablename},{
+	$conf->{user_field} => $c->{user_value},
+	$conf->{password_field} => $c->{password_value},
+    });
+    if($user){
+	$self->session->set('login' => 'yes');
+	$self->session->set('username' => $c->{username});
+	$self->session->set('user' => $user );
+    }
+    else{
+	return undef;
+    }
+}
+
 # setup view class
 use Text::Xslate;
 {
@@ -162,6 +180,12 @@ __PACKAGE__->add_trigger(
     AFTER_DISPATCH => sub {
         my ( $c, $res ) = @_;
         $res->header( 'X-Content-Type-Options' => 'nosniff' );
+	if($c->config->{Log}){
+	    use Log::Minimal;
+	    $ENV{LM_DEBUG}=1;
+	    $Log::Minimal::COLOR=1;
+	    debugf("[ DEBUG ] request path => ".$c->req->param());
+	}
     },
 );
 
@@ -178,82 +202,74 @@ __PACKAGE__->add_trigger(
 
     $self->write_file("config/development.pl", <<'...');
 +{
-    'Teng' => [
-        dsn => 'dbi:mysql:dbname=<% $module %>.db',
-        username => '',
-        password => '',
-        +{
+    'Teng' => {
+        dsn => 'dbi:mysql:dbname=meropic',
+        username => 'meropic',
+        password => 'diu2ioeuz2oe23z',
+        {
 	    mysql_enable_utf8 => '1',
         }
-    ],
+    },
     'Text::Xslate' => +{},
+    'Login' => {
+	tablename => 'user',
+	user_field => 'mailaddress',
+	password_field => 'password',
+    },
+    'Log' => '1',
 };
 
-};
 ...
 
     $self->write_file("config/deployment.pl", <<'...');
 +{
-    'Teng' => [
-        dsn => 'dbi:mysql:dbname=<% $module %>.db',
-        username => '',
-        password => '',
-        +{
+    'Teng' => {
+        dsn => 'dbi:mysql:dbname=meropic',
+        username => 'meropic',
+        password => 'diu2ioeuz2oe23z',
+        {
 	    mysql_enable_utf8 => '1',
         }
-    ],
+    },
     'Text::Xslate' => +{},
+    'Login' => {
+	tablename => 'user',
+	user_field => 'mailaddress',
+	password_field => 'password',
+    },
+    'Log' => '1',
 };
+
 ...
 
     $self->write_file("config/test.pl", <<'...');
 +{
-    'Teng' => [
-        dsn => 'dbi:mysql:dbname=<% $module %>.db',
-        username => '',
-        password => '',
-        +{
+    'Teng' => {
+        dsn => 'dbi:mysql:dbname=meropic',
+        username => 'meropic',
+        password => 'diu2ioeuz2oe23z',
+        {
 	    mysql_enable_utf8 => '1',
         }
-    ],
+    },
     'Text::Xslate' => +{},
+    'Login' => {
+	tablename => 'user',
+	user_field => 'mailaddress',
+	password_field => 'password',
+    },
+    'Log' => '1',
 };
+
 ...
     $self->write_file("sql/my.sql", '');
     $self->write_file("sql/sqlite3.sql", '');
 $self->write_file("tmpl/index.tt",<<'...');
-[% WRAPPER 'include/layout.tt' %]
-
-<hr class="space">
-
-<div class="span-15 colborder">
-    <h1>Hello, Amon2 world!</h1>
-
-    <h2>For benchmarkers...</h2>
-    <p>If you want to benchmarking between Plack based web application frameworks, you should use <B>Amon2::Setup::Flavor::Minimum</B> instead.</p>
-    <p>You can use it as following one liner:</p>
-    <pre>% amon2-setup.pl --flavor Minimum <% $module %></pre>
-</div>
-<div class="span-8 last">
-    <p>Amon2 is right for you if ...</p>
-    <ul>
-    <li>You need exceptional performance.</li>
-    <li>You want a framework with a small footprint.</li>
-    <li>You want a framework that requires nearly zero configuration.</li>
-    </ul>
-</div>
-
-<hr class="space">
-
-[% END %]
-...
-    $self->{jquery_min_basename} = Amon2::Setup::Asset::jQuery->jquery_min_basename();
-$self->write_file('tmpl/include/layout.tt', <<'...');
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-    <title>[% title || '<% $module %>' %]</title>
+    <title>[% title || 'MyApp' %]</title>
     <meta http-equiv="Content-Style-Type" content="text/css" />  
     <meta http-equiv="Content-Script-Type" content="text/javascript" />  
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0"]]>
@@ -267,22 +283,31 @@ $self->write_file('tmpl/include/layout.tt', <<'...');
         <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 </head>
-<body[% IF bodyID %] class="[% bodyID %]"[% END %]>
-    <div class="container">
-        <header>
-            <a href="[% uri_for('/') %]"><% $module %></a>
-        </header>
-        <div id="main">
-            [% content %]
-        </div>
-        <footer>
-            Powered by <a href="http://amon.64p.org/">Amon2</a>
-        </footer>
+<body>
+<div id="container">
+    <div id="header">
     </div>
+
+    <div id="wrapper">
+    <div id="content">
+    <h1>welcome </h1>
+    </div>
+    </div>
+
+    <div id="navigation">
+    </div>
+
+    <div id="extra">
+    </div>
+
+    <div id="footer">
+    </div>
+
+</div>
 </body>
-</html>
 ...
-	$self->write_file('static/javascript/' . Amon2::Setup::Asset::jQuery->jquery_min_basename(), Amon2::Setup::Asset::jQuery->jquery_min_content());
+    $self->{jquery_min_basename} = Amon2::Setup::Asset::jQuery->jquery_min_basename();
+    $self->write_file('static/javascript/' . Amon2::Setup::Asset::jQuery->jquery_min_basename(), Amon2::Setup::Asset::jQuery->jquery_min_content());
     $self->_cp(Amon2::Setup::Asset::BlueTrip->bluetrip_path, 'static/css');
     
     $self->write_file("t/00_compile.t", <<'...');
