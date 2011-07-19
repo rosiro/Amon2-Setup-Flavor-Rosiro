@@ -80,7 +80,7 @@ use utf8;
 
 sub index {
     my ($class, $c) = @_;
-    $c->render('root/template/index.tt');
+    $c->render('index.tt');
 }
 
 1;
