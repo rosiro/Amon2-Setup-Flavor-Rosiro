@@ -17,10 +17,6 @@ sub run {
     $self->mkpath('static/images');
     $self->mkpath('static/javascript');
     $self->mkpath('static/css');
-    $self->mkpath('lib/<< PATH >>/DB');
-    $self->mkpath('lib/<< PATH >>/Web');
-    $self->mkpath('lib/<< PATH >>/Web/C');
-    $self->mkpath('lib/<< PATH >>/Web/M');
     $self->mkpath('script');
     $self->write_file('lib/<<PATH>>.pm', <<'...');
 package <% $module %>;
