@@ -14,11 +14,12 @@ use File::Copy;
 sub run {
     my $self = shift;
     $self->SUPER::run();
-    $self->mkpath('static/images');
-    $self->mkpath('static/javascript');
-    $self->mkpath('static/css');
+    $self->mkpath('root');
+    $self->mkpath('root/template');
+    $self->mkpath('root/static/images');
+    $self->mkpath('root/static/javascript');
+    $self->mkpath('root/static/css');
     $self->mkpath('script');
-    $self->mkpath('lib/<% $module %>/Web/M');
     $self->write_file('lib/<<PATH>>.pm', <<'...');
 package <% $module %>;
 use strict;
@@ -62,7 +63,7 @@ use utf8;
 
 sub index {
     my ($class, $c) = @_;
-    $c->render('index.tt');
+    $c->render('root/template/index.tt');
 }
 
 1;
@@ -147,7 +148,7 @@ use Text::Xslate;
 {
     my $view_conf = __PACKAGE__->config->{'Text::Xslate'} || +{};
     unless (exists $view_conf->{path}) {
-        $view_conf->{path} = [ File::Spec->catdir(__PACKAGE__->base_dir(), 'tmpl') ];
+        $view_conf->{path} = [ File::Spec->catdir(__PACKAGE__->base_dir(), 'root/template') ];
     }
     my $view = Text::Xslate->new(+{
         'syntax'   => 'TTerse',
@@ -265,7 +266,7 @@ __PACKAGE__->add_trigger(
 ...
     $self->write_file("sql/my.sql", '');
     $self->write_file("sql/sqlite3.sql", '');
-$self->write_file("tmpl/index.tt",<<'...');
+$self->write_file("root/template/index.tt",<<'...');
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -308,8 +309,8 @@ $self->write_file("tmpl/index.tt",<<'...');
 </body>
 ...
     $self->{jquery_min_basename} = Amon2::Setup::Asset::jQuery->jquery_min_basename();
-    $self->write_file('static/javascript/' . Amon2::Setup::Asset::jQuery->jquery_min_basename(), Amon2::Setup::Asset::jQuery->jquery_min_content());
-    $self->_cp(Amon2::Setup::Asset::BlueTrip->bluetrip_path, 'static/css');
+    $self->write_file('root/static/javascript/' . Amon2::Setup::Asset::jQuery->jquery_min_basename(), Amon2::Setup::Asset::jQuery->jquery_min_content());
+    $self->_cp(Amon2::Setup::Asset::BlueTrip->bluetrip_path, 'root/static');
     
     $self->write_file("t/00_compile.t", <<'...');
 use strict;
@@ -354,7 +355,7 @@ test.db
 ...
 
     for my $status (qw/404 500 502 503 504/) {
-        $self->write_status_file("static/$status.html", $status);
+        $self->write_status_file("root/static/$status.html", $status);
     }
 }
 
