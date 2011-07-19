@@ -283,7 +283,7 @@ __PACKAGE__->add_trigger(
 ...
     $self->write_file("sql/my.sql", '');
     $self->write_file("sql/sqlite3.sql", '');
-$self->write_file("main.css","...")
+$self->write_file("root/static/css/main.css","...")
 
 ...
 $self->write_file("root/template/index.tt",<<'...');
