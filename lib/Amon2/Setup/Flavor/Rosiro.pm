@@ -17,17 +17,31 @@ sub run {
     $self->mkpath('static/images');
     $self->mkpath('static/javascript');
     $self->mkpath('static/css');
-    $self->mkpath('lib/DB');
+    $self->mkpath('lib/<< PATH >>/DB');
+    $self->mkpath('lib/<< PATH >>/Web');
+    $self->mkpath('lib/<< PATH >>/Web/C');
+    $self->mkpath('lib/<< PATH >>/Web/M');
     $self->mkpath('script');
-    $self->write_file('lib<<PATH>>.pm', <<'...');
+    $self->write_file('lib/<<PATH>>.pm', <<'...');
 package <% $module %>;
 use strict;
 use warnings;
 use parent qw/Amon2/;
 our $VERSION='0.01';
 use 5.008001;
+use <% $module %>::DB;
 
-# __PACKAGE__->load_plugin(qw/DBI/);
+sub db {
+    my ($self, $c) = @_;
+    if (!defined $self->{db}) {
+        my $conf = $self->config->{'Teng'} or die "missing configuration for 'Teng'";
+        my $dbh = DBI->connect($conf->{dsn}, $conf->{username}, $conf->{password}, $conf->{connect_options}) or "Cannot connect to DB:: " . $DBI::errstr;
+        $self->{db} = Hello::DB->new({ dbh => $dbh });
+    }
+    return $self->{db};
+}
+
+# __PACKAGE__->load_plugin(qw//);
 
 1;
 ...
@@ -39,8 +53,29 @@ use warnings;
 use Amon2::Web::Dispatcher::RouterSimple;
 
 connect '/' => 'Root#index';
+connect '/' => 'Root#default';
 
 1;
+...
+
+$self->write_file("lib/<<PATH>>/Web/C/Root.pm",<<'...');
+package <% $module %>::Web::C::Root;
+use strict;
+use warnings;
+use utf8;
+
+sub index {
+    my ($class, $c) = @_;
+}
+
+sub default {
+    my ($class, $c) = @_;
+    $c->res->status(404);
+    $c->res->body("404 Not Found");
+}
+
+1;
+
 ...
 
 $self->write_file("lib/<<PATH>>/DB.pm",<<'...');
@@ -83,6 +118,8 @@ use File::Spec;
 # load all controller classes
 use Module::Find ();
 Module::Find::useall("<% $module %>::Web::C");
+Module::Find::useall("<% $module %>::Web::M");
+
 
 # dispatcher
 use <% $module %>::Web::Dispatcher;
@@ -153,6 +190,9 @@ __PACKAGE__->add_trigger(
 	    mysql_enable_utf8 => '1',
         }
     ],
+    'Text::Xslate' => +{},
+};
+
 };
 ...
 
@@ -166,6 +206,7 @@ __PACKAGE__->add_trigger(
 	    mysql_enable_utf8 => '1',
         }
     ],
+    'Text::Xslate' => +{},
 };
 ...
 
@@ -179,6 +220,7 @@ __PACKAGE__->add_trigger(
 	    mysql_enable_utf8 => '1',
         }
     ],
+    'Text::Xslate' => +{},
 };
 ...
     $self->write_file("sql/my.sql", '');
@@ -347,7 +389,7 @@ Amon2::Setup::Flavor::Rosiro -
 
 =head1 SYNOPSIS
 
-  use Amon2::Setup::Flavor::Rosiro;
+use Amon2::Setup::Flavor::Rosiro;
 
 =head1 DESCRIPTION
 
@@ -355,9 +397,11 @@ Amon2::Setup::Flavor::Rosiro is
 
 =head1 AUTHOR
 
-rosiro
+Rosiro L<https://github.com/rosiro/>
 
 =head1 SEE ALSO
+
+L<https://github.com/rosiro/Amon2-Setup-Flavor-Rosiro>
 
 =head1 LICENSE
 
