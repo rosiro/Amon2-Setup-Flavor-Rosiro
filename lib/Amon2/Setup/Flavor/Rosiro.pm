@@ -293,9 +293,9 @@ $self->write_file("root/template/index.tt",<<'...');
     <meta http-equiv="Content-Script-Type" content="text/javascript" />  
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0"]]>
     <meta name="format-detection" content="telephone=no" />
-    <link href="[% uri_for('/static/css/blueprint/screen.css') %]" rel="stylesheet" type="text/css" media="screen" />
-    <link href="[% uri_for('/static/css/blueprint/print.css') %]" rel="stylesheet" type="text/css" media="print" />
-    <!--[if lt IE 8]><link rel="stylesheet" href="[% uri_for('/static/css/blueprint/ie.css') %]" type="text/css" media="screen, projection"><![endif]--> 
+    <link href="[% uri_for('/static/css/bluetrip/screen.css') %]" rel="stylesheet" type="text/css" media="screen" />
+    <link href="[% uri_for('/static/css/bluetrip/print.css') %]" rel="stylesheet" type="text/css" media="print" />
+    <!--[if lt IE 8]><link rel="stylesheet" href="[% uri_for('/static/css/bluetrip/ie.css') %]" type="text/css" media="screen, projection"><![endif]--> 
     <link href="[% uri_for('/static/css/main.css') %]" rel="stylesheet" type="text/css" media="screen" />
     <script src="[% uri_for('/static/js/jquery-1.6.2.min.js') %]"></script>
     <!--[if lt IE 9]>
@@ -327,7 +327,7 @@ $self->write_file("root/template/index.tt",<<'...');
 ...
     $self->{jquery_min_basename} = Amon2::Setup::Asset::jQuery->jquery_min_basename();
     $self->write_file('root/static/javascript/' . Amon2::Setup::Asset::jQuery->jquery_min_basename(), Amon2::Setup::Asset::jQuery->jquery_min_content());
-    $self->_cp(Amon2::Setup::Asset::BlueTrip->bluetrip_path, 'root/static');
+    $self->_cp(Amon2::Setup::Asset::BlueTrip->bluetrip_path, 'root/static/bluetrip');
     
     $self->write_file("t/00_compile.t", <<'...');
 use strict;
