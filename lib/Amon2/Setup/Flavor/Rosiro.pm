@@ -4,7 +4,7 @@ use warnings;
 use 5.008001;
 our $VERSION = '0.01';
 
-use parent qw(Amon2::Setup::Flavor::Basic);
+use parent qw(Amon2::Setup::Flavor::Minimum);
 use Amon2::Setup::Asset::jQuery;
 use Amon2::Setup::Asset::BlueTrip;
 use HTTP::Status qw/status_message/;
@@ -20,7 +20,7 @@ sub run {
     $self->mkpath('lib/DB');
     $self->mkpath('script');
     $self->write_file('lib<<PATH>>.pm', <<'...');
-package <% module %>;
+package <% $module %>;
 use strict;
 use warnings;
 use parent qw/Amon2/;
@@ -31,21 +31,63 @@ use 5.008001;
 
 1;
 ...
-    $self->write_file('lib/<<PATH>>/Web.pm', <<'...');
-package <% module %>::Web;
+
+$self->write_file("lib/<<PATH>>/Web/Dispatcher.pm",<<'...');
+package <% $module %>::Web::Dispatcher;
 use strict;
 use warnings;
-use parent qw/<% module %> Amon2::Web/;
+use Amon2::Web::Dispatcher::RouterSimple;
+
+connect '/' => 'Root#index';
+
+1;
+...
+
+$self->write_file("lib/<<PATH>>/DB.pm",<<'...');
+package <% $module %>::DB;
+use parent 'Teng';
+
+1;
+...
+    $self->write_file("script/make_schema.pl",<<'...');
+use strict;
+use warnings;
+use utf8;
+use DBI;
+use FindBin;
+use File::Spec;
+use lib File::Spec->catdir($FindBin::Bin, '..', 'lib');
+use lib File::Spec->catdir($FindBin::Bin, '..', 'extlib', 'lib', 'perl5');
+use <% $module %>;
+use Teng::Schema::Dumper;
+
+my $c = <% $module %>->bootstrap;
+my $conf = $c->config->{'Teng'};
+
+my $dbh = DBI->connect($conf->{dsn}, $conf->{username}, $conf->{password}, $conf->{connect_options}) or die "Cannot connect to DB:: " . $DBI::errstr;
+my $schema = Teng::Schema::Dumper->dump(dbh => $dbh, namespace => '<% $module %>::DB');
+
+my $dest = File::Spec->catfile($FindBin::Bin, '..', 'lib', '<% $module %>', 'DB', 'Schema.pm');
+open my $fh, '>', $dest or die "cannot open file '$dest': $!";
+print {$fh} $schema;
+close;
+...
+
+    $self->write_file('lib/<<PATH>>/Web.pm', <<'...');
+package <% $module %>::Web;
+use strict;
+use warnings;
+use parent qw/<% $module %> Amon2::Web/;
 use File::Spec;
 
 # load all controller classes
 use Module::Find ();
-Module::Find::useall("<% module %>::Web::C");
+Module::Find::useall("<% $module %>::Web::C");
 
 # dispatcher
-use <% module %>::Web::Dispatcher;
+use <% $module %>::Web::Dispatcher;
 sub dispatch {
-    return <% module %>::Web::Dispatcher->dispatch($_[0]) or die "response is not generated";
+    return <% $module %>::Web::Dispatcher->dispatch($_[0]) or die "response is not generated";
 }
 
 # setup view class
@@ -71,7 +113,7 @@ use Text::Xslate;
 # load plugins
 use HTTP::Session::Store::File;
 __PACKAGE__->load_plugins(
-    'Web::FillInFormLite',
+    #'Web::FillInFormLite',
     'Web::NoCache', # do not cache the dynamic content by default
     'Web::CSRFDefender',
     'Web::HTTPSession' => {
@@ -100,45 +142,7 @@ __PACKAGE__->add_trigger(
 
 1;
 ...
-$self->write_file("lib/<<PATH>>/Web/Dispatcher.pm",<<'...');
-package <% module %>::Web::Dispatcher;
-use strict;
-use warnings;
-use Amon2::Web::Dispatcher::RouterSimple;
 
-connect '/' => 'Root#index';
-
-1;
-...
-$self->write_file("lib/<<PATH>>/DB.pm",<<'...');
-package <% module %>::DB;
-use parent 'Teng';
-
-1;
-...
-    $self->write_file("script/make_schema.pl",<<'...');
-use strict;
-use warnings;
-use utf8;
-use DBI;
-use FindBin;
-use File::Spec;
-use lib File::Spec->catdir($FindBin::Bin, '..', 'lib');
-use lib File::Spec->catdir($FindBin::Bin, '..', 'extlib', 'lib', 'perl5');
-use <% module %>;
-use Teng::Schema::Dumper;
-
-my $c = <% module %>->bootstrap;
-my $conf = $c->config->{'Teng'};
-
-my $dbh = DBI->connect($conf->{dsn}, $conf->{username}, $conf->{password}, $conf->{connect_options}) or die "Cannot connect to DB:: " . $DBI::errstr;
-my $schema = Teng::Schema::Dumper->dump(dbh => $dbh, namespace => '<% module %>::DB');
-
-my $dest = File::Spec->catfile($FindBin::Bin, '..', 'lib', '<% module %>', 'DB', 'Schema.pm');
-open my $fh, '>', $dest or die "cannot open file '$dest': $!";
-print {$fh} $schema;
-close;
-...
     $self->write_file("config/development.pl", <<'...');
 +{
     'DBI' => [
@@ -190,7 +194,7 @@ $self->write_file("tmpl/index.tt",<<'...');
     <h2>For benchmarkers...</h2>
     <p>If you want to benchmarking between Plack based web application frameworks, you should use <B>Amon2::Setup::Flavor::Minimum</B> instead.</p>
     <p>You can use it as following one liner:</p>
-    <pre>% amon2-setup.pl --flavor Minimum <% module %></pre>
+    <pre>% amon2-setup.pl --flavor Minimum <% $module %></pre>
 </div>
 <div class="span-8 last">
     <p>Amon2 is right for you if ...</p>
@@ -211,7 +215,7 @@ $self->write_file('tmpl/include/layout.tt', <<'...');
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-    <title>[% title || '<% module %>' %]</title>
+    <title>[% title || '<% $module %>' %]</title>
     <meta http-equiv="Content-Style-Type" content="text/css" />  
     <meta http-equiv="Content-Script-Type" content="text/javascript" />  
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0"]]>
@@ -228,7 +232,7 @@ $self->write_file('tmpl/include/layout.tt', <<'...');
 <body[% IF bodyID %] class="[% bodyID %]"[% END %]>
     <div class="container">
         <header>
-            <a href="[% uri_for('/') %]"><% module %></a>
+            <a href="[% uri_for('/') %]"><% $module %></a>
         </header>
         <div id="main">
             [% content %]
@@ -351,7 +355,7 @@ Amon2::Setup::Flavor::Rosiro is
 
 =head1 AUTHOR
 
-rpsorp http://twitter.com/rosiro
+rosiro
 
 =head1 SEE ALSO
 
