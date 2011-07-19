@@ -18,6 +18,7 @@ sub run {
     $self->mkpath('static/javascript');
     $self->mkpath('static/css');
     $self->mkpath('script');
+    $self->mkpath('lib/<% $module %>/Web/M');
     $self->write_file('lib/<<PATH>>.pm', <<'...');
 package <% $module %>;
 use strict;
@@ -237,7 +238,7 @@ __PACKAGE__->add_trigger(
 	user_field => 'mailaddress',
 	password_field => 'password',
     },
-    'Log' => '1',
+    'Log' => '0',
 };
 
 ...
